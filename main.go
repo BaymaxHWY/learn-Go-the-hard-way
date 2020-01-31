@@ -28,6 +28,13 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 				r.httpHandler.ServeHTTP(res, req)
 			} else {
 				//TODO:pass the contex to the function and write return value to res.
+				cxt := &Context{
+					Request:        req,
+					Server:         s,
+				}
+				in := reflect.ValueOf(cxt)
+				out := r.handler.Call([]reflect.Value{in})[0].String()
+				res.Write([]byte(out))
 			}
 		}
 	}
