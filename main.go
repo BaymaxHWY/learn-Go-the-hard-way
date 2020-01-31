@@ -36,9 +36,20 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 				}
 				var args []reflect.Value
 				args = append(args, reflect.ValueOf(ctx))
-				out := r.handler.Call(args)[0]
-				outs := out.String()
-				ctx.ResponseWriter.Write([]byte(outs))
+
+				ret := r.handler.Call(args)
+				if len(ret) == 0 {
+					return
+				}
+				//if has return value,write to response.
+				sval := ret[0]
+				var content []byte
+				if sval.Kind() == reflect.String {
+					content = []byte(sval.String())
+				} else if sval.Kind() == reflect.Slice && sval.Type().Elem().Kind() == reflect.Uint8 {
+					content = sval.Interface().([]byte)
+				}
+				ctx.ResponseWriter.Write(content)
 			}
 		}
 	}
