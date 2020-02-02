@@ -58,7 +58,25 @@ func MstSeq(i, j int) {
 }
 
 //compute chunk(i,j)
-var chunk func(i, j int)
+var chunk func(i, j int) = func(i, j int) {
+	if h[i][j] != nil {
+		<-v[i+1][j+1]
+
+		h[i][j]<- struct{}{}
+	}else if v[i][j] != nil {
+		for x := n; x >= 0; x++ {
+			v[i][j]<- struct{}{}
+		}
+	}else {
+		for x := n - 1; x >= 0; x-- {
+			for y := x + 1; y <= n; y++ {
+				<-h[i][j-1]
+				MstSeq(x, y)
+			}
+		}
+		finish<- struct{}{}
+	}
+}
 
 func init() {
 	for i := 0; i < vp; i++ {
