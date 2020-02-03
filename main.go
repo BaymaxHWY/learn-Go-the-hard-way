@@ -87,6 +87,8 @@ func (l *lexer) next() rune {
 		l.width = 0
 		return eof
 	}
+	// DecodeRuneInString 接受一个字符串，返回该字符串的第一个rune和其size
+	// 例如：输入"Hello World" DecodeRuneInString会返回 H,1(中文 size=3 )
 	r, w := utf8.DecodeRuneInString(l.src[l.pos:])
 	l.width = w
 	l.pos += l.width
@@ -167,6 +169,32 @@ func lexUnkown(l *lexer) stateFn {
 //TODO:scan number,and emit the token.
 func lexNum(l *lexer) stateFn {
 	//unfinished
+	// 需要把一整个数字接收
+	// 首先要确定起点，l.start 长度：需要自己遍历，同时需要改变l.start、l.cloNum的值（完成遍历后）
+	var lit string
+	l.pos = l.start
+	for l.pos < len(l.src){
+		r, w := utf8.DecodeRuneInString(l.src[l.pos:])
+		if unicode.IsDigit(r) || r == '.' || r == '-' || r == 'e' {
+			lit += l.src[l.pos : l.pos + w]
+		}else {
+			break
+		}
+		l.width = w
+		l.pos += l.width
+		l.colNum += l.width
+	}
+	var t  = token{
+		lit: lit,
+		typ: tNUM,
+		pos: position{l.lineNum, l.colNum - (l.pos - l.start)},
+	}
+	l.tokenChan <- t
+	if t.typ == tEOF {
+		close(l.tokenChan)
+	}
+	l.cur = t
+	l.start = l.pos
 	return lexBegin
 }
 
@@ -180,10 +208,10 @@ func lexEOF(l *lexer) stateFn {
 func lexBegin(l *lexer) stateFn {
 	switch r := l.next(); {
 	case unicode.IsDigit(r) || r == '.' || r == '-':
-		l.backup()
 		if r == '-' && l.cur.typ == tNUM {
 			goto L //go to minus
 		}
+		l.backup()
 		lexNum(l)
 		return lexBegin
 	L:
@@ -213,11 +241,13 @@ func lexBegin(l *lexer) stateFn {
 }
 
 func main() {
-	println(`In this task we will focus on a lexer implementation,and it's concurrency part.
-lexer is a lexical scanner that consumes source code and produce meaningful tokens.With these tokens we can then 
-complete a small calculator.Our simple lexer just need to scann several tokens '+','-','*','\',and numbers.
-Lexer is a typical produer-consumer pattern,so we need a channel to send token ater lexer initiated and run the scanner in a goroutine.
-Instead of switch,we use sate function,in order to skip the case statements.
-And finally we just need to receive tokens from the channel.
-Now edit main.go and finish the task.Utitiles of lexer have been given,you need to write a small regexp engine to complete the 'lexNum' stateFn and pass the test.(Notice don't run 'go test' right now,because lexNum is currently infinite loop.`)
+	str := "100.11 - 10.e2"
+	fmt.Println(str[7:8])
+//	println(`In this task we will focus on a lexer implementation,and it's concurrency part.
+//lexer is a lexical scanner that consumes source code and produce meaningful tokens.With these tokens we can then
+//complete a small calculator.Our simple lexer just need to scann several tokens '+','-','*','\',and numbers.
+//Lexer is a typical produer-consumer pattern,so we need a channel to send token ater lexer initiated and run the scanner in a goroutine.
+//Instead of switch,we use sate function,in order to skip the case statements.
+//And finally we just need to receive tokens from the channel.
+//Now edit main.go and finish the task.Utitiles of lexer have been given,you need to write a small regexp engine to complete the 'lexNum' stateFn and pass the test.(Notice don't run 'go test' right now,because lexNum is currently infinite loop.`)
 }
