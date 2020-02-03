@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 )
@@ -13,6 +14,8 @@ type Cheat struct {
 
 //TODO:complete the struct to be encoded by encoding/json.
 type Content struct {
+	Comment string
+	Command string
 }
 
 func CheatSheet(command string) string {
@@ -27,6 +30,14 @@ func CheatSheet(command string) string {
 	//TODO:find the name of which cheatsheet matchs command
 	//and add to out.
 	// ...
+	for _, cheat := range cheats {
+		if cheat.Name == command {
+			for _, content := range cheat.Contents {
+				out += fmt.Sprintf("%s\n%s\n", content.Comment, content.Command)
+			}
+			break
+		}
+	}
 	return out
 }
 
