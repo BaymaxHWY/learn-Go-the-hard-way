@@ -171,31 +171,25 @@ func lexNum(l *lexer) stateFn {
 	//unfinished
 	// 需要把一整个数字接收
 	// 首先要确定起点，l.start 长度：需要自己遍历，同时需要改变l.start、l.cloNum的值（完成遍历后）
-	var lit string
-	l.pos = l.start
-	for l.pos < len(l.src){
-		r, w := utf8.DecodeRuneInString(l.src[l.pos:])
-		if unicode.IsDigit(r) || r == '.' || r == '-' || r == 'e' {
-			lit += l.src[l.pos : l.pos + w]
-		}else {
-			break
-		}
-		l.width = w
-		l.pos += l.width
-		l.colNum += l.width
+	//var lit string
+	//l.pos = l.start
+	//for l.pos < len(l.src){
+	//	r, w := utf8.DecodeRuneInString(l.src[l.pos:])
+	//	if unicode.IsDigit(r) || r == '.' || r == '-' || r == 'e' {
+	//		lit += l.src[l.pos : l.pos + w]
+	//	}else {
+	//		break
+	//	}
+	//	l.width = w
+	//	l.pos += l.width
+	//	l.colNum += l.width
+	//}
+	for r := l.peek(); unicode.IsDigit(r) || r == '.' || r == '-' || r == 'e'; {
+		l.next()
+		r = l.peek()
 	}
-	var t  = token{
-		lit: lit,
-		typ: tNUM,
-		pos: position{l.lineNum, l.colNum - (l.pos - l.start)},
-	}
-	l.tokenChan <- t
-	if t.typ == tEOF {
-		close(l.tokenChan)
-	}
-	l.cur = t
-	l.start = l.pos
-	return lexBegin
+	l.emit(tNUM)
+	return nil
 }
 
 //end of scanning
